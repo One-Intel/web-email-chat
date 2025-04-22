@@ -134,7 +134,7 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
           >
             <Avatar>
               <AvatarImage 
-                src={participant?.avatar_url ?? undefined} 
+                src={participant?.avatar_url || undefined} 
                 alt={participant?.full_name || "Unknown"}
               />
               <AvatarFallback>
