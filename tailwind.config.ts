@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,6 +25,15 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				webchat: {
+					primary: '#25D366',    // WhatsApp green
+					light: '#DCF8C6',      // Light green bubble
+					bg: '#ECE5DD',         // Chat background
+					secondary: '#128C7E',  // Darker green
+					read: '#4FC3F7',       // Blue for read receipts
+					hover: '#F5F5F5',      // Hover state
+					dark: '#075E54'         // Dark green
+				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
@@ -84,11 +94,33 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					"0%": {
+						opacity: "0",
+						transform: "translateY(10px)"
+					},
+					"100%": {
+						opacity: "1",
+						transform: "translateY(0)"
+					}
+				},
+				'slide-in': {
+					"0%": {
+						opacity: "0",
+						transform: "translateX(-10px)"
+					},
+					"100%": {
+						opacity: "1",
+						transform: "translateX(0)"
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-in': 'slide-in 0.3s ease-out'
 			}
 		}
 	},
