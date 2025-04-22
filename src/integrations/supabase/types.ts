@@ -9,7 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      chat_participants: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          chat_id: string
+          content: string | null
+          created_at: string | null
+          id: string
+          is_deleted: boolean | null
+          sender_id: string
+          status: string | null
+        }
+        Insert: {
+          chat_id: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          sender_id: string
+          status?: string | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          sender_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string
+          id: string
+          last_seen: string | null
+          status_message: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name: string
+          id: string
+          last_seen?: string | null
+          status_message?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          last_seen?: string | null
+          status_message?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
