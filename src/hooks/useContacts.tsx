@@ -2,11 +2,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
+
+type Contact = Database['public']['Tables']['contacts']['Row'] & {
+  contact: {
+    id: string;
+    email: string;
+    profiles: {
+      full_name: string;
+      avatar_url: string | null;
+      status_message: string | null;
+      last_seen: string | null;
+    };
+  };
+};
 
 export const useContacts = () => {
   const queryClient = useQueryClient();
 
-  const { data: contacts, isLoading } = useQuery({
+  const { data: contacts, isLoading } = useQuery<Contact[]>({
     queryKey: ["contacts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -16,7 +30,7 @@ export const useContacts = () => {
           contact:contact_id (
             id,
             email,
-            profiles:profiles (
+            profiles (
               full_name,
               avatar_url,
               status_message,

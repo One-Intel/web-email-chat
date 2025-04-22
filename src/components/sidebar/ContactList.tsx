@@ -58,7 +58,7 @@ export const ContactList = () => {
             className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
           >
             <Avatar>
-              <AvatarImage src={contact.contact.profiles.avatar_url} />
+              <AvatarImage src={contact.contact.profiles.avatar_url ?? undefined} />
               <AvatarFallback>
                 {contact.contact.profiles.full_name[0]}
               </AvatarFallback>

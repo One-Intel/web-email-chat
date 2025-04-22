@@ -3,9 +3,26 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Database } from "@/integrations/supabase/types";
+
+type ChatParticipant = {
+  user: {
+    id: string;
+    email: string;
+    profiles: {
+      full_name: string;
+      avatar_url: string | null;
+    };
+  };
+};
+
+type Chat = Database['public']['Tables']['chats']['Row'] & {
+  chat_participants: ChatParticipant[];
+  messages: Database['public']['Tables']['messages']['Row'][];
+};
 
 export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => void }) => {
-  const { data: chats, isLoading } = useQuery({
+  const { data: chats, isLoading } = useQuery<Chat[]>({
     queryKey: ["chats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -16,7 +33,7 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
             user:user_id (
               id,
               email,
-              profiles:profiles (
+              profiles (
                 full_name,
                 avatar_url
               )
@@ -46,7 +63,7 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
           onClick={() => onChatSelect(chat.id)}
         >
           <Avatar>
-            <AvatarImage src={chat.chat_participants[0].user.profiles.avatar_url} />
+            <AvatarImage src={chat.chat_participants[0].user.profiles.avatar_url ?? undefined} />
             <AvatarFallback>
               {chat.chat_participants[0].user.profiles.full_name[0]}
             </AvatarFallback>
