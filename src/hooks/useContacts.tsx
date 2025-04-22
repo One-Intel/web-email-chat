@@ -5,15 +5,13 @@ import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
 
 type ContactWithProfile = Database['public']['Tables']['contacts']['Row'] & {
-  contact: {
+  profiles: {
     id: string;
-    profiles: {
-      full_name: string;
-      avatar_url: string | null;
-      status_message: string | null;
-      last_seen: string | null;
-    };
-  };
+    full_name: string;
+    avatar_url: string | null;
+    status_message: string | null;
+    last_seen: string | null;
+  }
 };
 
 export const useContacts = () => {
@@ -23,24 +21,29 @@ export const useContacts = () => {
   const { data: acceptedContacts, isLoading: isLoadingAccepted } = useQuery<ContactWithProfile[]>({
     queryKey: ["contacts", "accepted"],
     queryFn: async () => {
+      // Get the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
+      
+      // Get contacts with joined profile data
       const { data, error } = await supabase
         .from("contacts")
         .select(`
           *,
-          contact:contact_id (
+          profiles:contact_id(
             id,
-            profiles (
-              full_name,
-              avatar_url,
-              status_message,
-              last_seen
-            )
+            full_name,
+            avatar_url,
+            status_message,
+            last_seen
           )
         `)
+        .eq("user_id", user.id)
         .eq("status", "accepted");
 
       if (error) throw error;
-      return data as ContactWithProfile[];
+      return data as unknown as ContactWithProfile[];
     },
   });
 
@@ -48,25 +51,28 @@ export const useContacts = () => {
   const { data: sentRequests, isLoading: isLoadingSent } = useQuery<ContactWithProfile[]>({
     queryKey: ["contacts", "sent"],
     queryFn: async () => {
+      // Get the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
+      
       const { data, error } = await supabase
         .from("contacts")
         .select(`
           *,
-          contact:contact_id (
+          profiles:contact_id(
             id,
-            profiles (
-              full_name,
-              avatar_url,
-              status_message,
-              last_seen
-            )
+            full_name,
+            avatar_url,
+            status_message,
+            last_seen
           )
         `)
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("user_id", user.id)
         .eq("status", "pending");
 
       if (error) throw error;
-      return data as ContactWithProfile[];
+      return data as unknown as ContactWithProfile[];
     },
   });
 
@@ -74,55 +80,45 @@ export const useContacts = () => {
   const { data: receivedRequests, isLoading: isLoadingReceived } = useQuery<ContactWithProfile[]>({
     queryKey: ["contacts", "received"],
     queryFn: async () => {
+      // Get the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
+      
       const { data, error } = await supabase
         .from("contacts")
         .select(`
           *,
-          contact:contact_id (
+          profiles:contact_id(
             id,
-            profiles (
-              full_name,
-              avatar_url,
-              status_message,
-              last_seen
-            )
+            full_name,
+            avatar_url,
+            status_message,
+            last_seen
           )
         `)
-        .eq("contact_id", (await supabase.auth.getUser()).data.user?.id)
+        .eq("contact_id", user.id)
         .eq("status", "pending");
 
       if (error) throw error;
-      return data as ContactWithProfile[];
+      return data as unknown as ContactWithProfile[];
     },
   });
 
   // Add a new contact
   const addContact = useMutation({
-    mutationFn: async (userEmail: string) => {
-      // First, find the user by their profiles.id (which would be the auth.users.id)
-      const { data: userProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Then find the user by their auth.id from profiles
-      const { data: userToAdd, error: userError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", userEmail)
-        .single();
-
-      if (userError) throw new Error("User not found");
-
+    mutationFn: async (contactId: string) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("User not authenticated");
+      
       // Check if contact request already exists
       const { data: existingContact, error: checkError } = await supabase
         .from("contacts")
         .select("*")
-        .eq("user_id", userProfile.id)
-        .eq("contact_id", userToAdd.id);
+        .eq("user_id", user.id)
+        .eq("contact_id", contactId);
 
       if (checkError) throw checkError;
       if (existingContact && existingContact.length > 0) {
@@ -131,8 +127,8 @@ export const useContacts = () => {
 
       // Create the contact request
       const { error } = await supabase.from("contacts").insert({
-        user_id: userProfile.id,
-        contact_id: userToAdd.id,
+        user_id: user.id,
+        contact_id: contactId,
         status: "pending",
       });
 

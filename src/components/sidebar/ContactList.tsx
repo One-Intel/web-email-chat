@@ -4,7 +4,7 @@ import { useContacts } from "@/hooks/useContacts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Plus, Mail, Check, X, UserPlus, Clock, Users } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +50,9 @@ export const ContactList = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Contact</DialogTitle>
+              <DialogDescription>
+                Enter the user ID of the contact you want to add
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -100,17 +103,17 @@ export const ContactList = () => {
               className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
             >
               <Avatar>
-                <AvatarImage src={contact.contact.profiles.avatar_url ?? undefined} />
+                <AvatarImage src={contact.profiles?.avatar_url ?? undefined} />
                 <AvatarFallback>
-                  {contact.contact.profiles.full_name[0]}
+                  {contact.profiles?.full_name?.[0] || '?'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">
-                  {contact.contact.profiles.full_name}
+                  {contact.profiles?.full_name || "Unknown"}
                 </p>
                 <p className="text-sm text-gray-500 truncate">
-                  {contact.contact.profiles.status_message || "Available"}
+                  {contact.profiles?.status_message || "Available"}
                 </p>
               </div>
             </div>
@@ -132,14 +135,14 @@ export const ContactList = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <Avatar>
-                      <AvatarImage src={request.contact.profiles.avatar_url ?? undefined} />
+                      <AvatarImage src={request.profiles?.avatar_url ?? undefined} />
                       <AvatarFallback>
-                        {request.contact.profiles.full_name[0]}
+                        {request.profiles?.full_name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">
-                        {request.contact.profiles.full_name}
+                        {request.profiles?.full_name || "Unknown"}
                       </p>
                       <p className="text-xs text-gray-500">
                         Wants to connect with you
@@ -188,14 +191,14 @@ export const ContactList = () => {
               >
                 <div className="flex items-center space-x-3">
                   <Avatar>
-                    <AvatarImage src={request.contact.profiles.avatar_url ?? undefined} />
+                    <AvatarImage src={request.profiles?.avatar_url ?? undefined} />
                     <AvatarFallback>
-                      {request.contact.profiles.full_name[0]}
+                      {request.profiles?.full_name?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
-                      {request.contact.profiles.full_name}
+                      {request.profiles?.full_name || "Unknown"}
                     </p>
                     <div className="flex items-center space-x-1">
                       <Clock className="h-3 w-3 text-yellow-500" />

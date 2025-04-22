@@ -122,31 +122,36 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
 
   return (
     <div className="space-y-2">
-      {chats.map((chat) => (
-        <div
-          key={chat.id}
-          className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
-          onClick={() => onChatSelect(chat.id)}
-        >
-          <Avatar>
-            <AvatarImage 
-              src={chat.participants[0]?.avatar_url ?? undefined} 
-              alt={chat.participants[0]?.full_name}
-            />
-            <AvatarFallback>
-              {chat.participants[0]?.full_name?.[0] || '?'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">
-              {chat.participants[0]?.full_name || "Unknown"}
-            </p>
-            <p className="text-sm text-gray-500 truncate">
-              {chat.latest_message?.content || "No messages yet"}
-            </p>
+      {chats.map((chat) => {
+        // Access participant safely
+        const participant = chat.participants?.[0] || null;
+        
+        return (
+          <div
+            key={chat.id}
+            className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
+            onClick={() => onChatSelect(chat.id)}
+          >
+            <Avatar>
+              <AvatarImage 
+                src={participant?.avatar_url ?? undefined} 
+                alt={participant?.full_name || "Unknown"}
+              />
+              <AvatarFallback>
+                {participant?.full_name?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">
+                {participant?.full_name || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-500 truncate">
+                {chat.latest_message?.content || "No messages yet"}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
