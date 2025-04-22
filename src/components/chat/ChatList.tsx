@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +26,6 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
   const { data: chats, isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["chats"],
     queryFn: async () => {
-      // First get chats where the current user is a participant
       const { data: chatIds, error: chatError } = await supabase
         .from("chat_participants")
         .select("chat_id")
@@ -39,14 +37,20 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
         return [];
       }
       
-      // Then get details for each chat
       const chatIdList = chatIds.map(c => c.chat_id);
       
       const { data, error } = await supabase
         .from("chats")
         .select(`
           id, 
-          created_at
+          created_at,
+          participants:chat_participants(
+            user:profiles(
+              id,
+              full_name,
+              avatar_url
+            )
+          )
         `)
         .in("id", chatIdList)
         .order("created_at", { ascending: false });
@@ -54,55 +58,15 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
       if (error) throw error;
       if (!data) return [];
       
-      // For each chat, get the participants and latest message
-      const enhancedChats = await Promise.all(data.map(async (chat) => {
-        // Get participants
-        const { data: participantsData, error: participantsError } = await supabase
-          .from("chat_participants")
-          .select(`
-            user_id
-          `)
-          .eq("chat_id", chat.id)
-          .neq("user_id", user?.id);
-        
-        if (participantsError) throw participantsError;
-        
-        // Get profiles for participants
-        let participants = [];
-        if (participantsData && participantsData.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from("profiles")
-            .select(`
-              id,
-              full_name,
-              avatar_url
-            `)
-            .in("id", participantsData.map(p => p.user_id));
-            
-          if (profilesError) throw profilesError;
-          participants = profilesData || [];
-        }
-        
-        // Get latest message
-        const { data: messagesData, error: messagesError } = await supabase
-          .from("messages")
-          .select(`
-            content,
-            created_at,
-            sender_id
-          `)
-          .eq("chat_id", chat.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-          
-        if (messagesError) throw messagesError;
+      const enhancedChats = data.map(chat => {
+        const otherParticipant = chat.participants
+          ?.find(p => p.user.id !== user?.id)?.user;
         
         return {
           ...chat,
-          participants,
-          latest_message: messagesData && messagesData[0]
-        } as ChatWithDetails;
-      }));
+          participants: otherParticipant ? [otherParticipant] : []
+        };
+      });
       
       return enhancedChats;
     },
@@ -122,9 +86,8 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
 
   return (
     <div className="space-y-2">
-      {chats.map((chat) => {
-        // Access participant safely
-        const participant = chat.participants?.[0] || null;
+      {chats?.map((chat) => {
+        const participant = chat.participants?.[0];
         
         return (
           <div
