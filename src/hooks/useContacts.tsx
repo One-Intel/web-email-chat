@@ -41,7 +41,7 @@ export const useContacts = () => {
         .eq("status", "accepted");
 
       if (error) throw error;
-      return data;
+      return data as Contact[];
     },
   });
 
@@ -50,6 +50,7 @@ export const useContacts = () => {
       const { data: userToAdd, error: userError } = await supabase
         .from("profiles")
         .select("id")
+        .eq("email", email)
         .single();
 
       if (userError) throw userError;

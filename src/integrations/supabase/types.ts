@@ -76,6 +76,8 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachment_type: string | null
+          attachment_url: string | null
           chat_id: string
           content: string | null
           created_at: string | null
@@ -85,6 +87,8 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           chat_id: string
           content?: string | null
           created_at?: string | null
@@ -94,6 +98,8 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           chat_id?: string
           content?: string | null
           created_at?: string | null
@@ -136,6 +142,39 @@ export type Database = {
           id?: string
           last_seen?: string | null
           status_message?: string | null
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          message_notifications: boolean
+          online_status: boolean
+          read_receipts: boolean
+          status_notifications: boolean
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_notifications?: boolean
+          online_status?: boolean
+          read_receipts?: boolean
+          status_notifications?: boolean
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_notifications?: boolean
+          online_status?: boolean
+          read_receipts?: boolean
+          status_notifications?: boolean
+          theme?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

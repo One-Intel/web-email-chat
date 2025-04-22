@@ -48,7 +48,7 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
         .order("created_at", { foreignTable: "messages", ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Chat[];
     },
   });
 
