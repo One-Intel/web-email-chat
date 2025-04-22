@@ -4,76 +4,145 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
 
-type ChatParticipant = {
-  user: {
+type ChatWithDetails = Database['public']['Tables']['chats']['Row'] & {
+  participants: {
     id: string;
-    email: string;
     profiles: {
       full_name: string;
       avatar_url: string | null;
     };
+  }[];
+  latest_message?: {
+    content: string | null;
+    created_at: string | null;
+    sender_id: string;
   };
 };
 
-type Chat = Database['public']['Tables']['chats']['Row'] & {
-  chat_participants: ChatParticipant[];
-  messages: Database['public']['Tables']['messages']['Row'][];
-};
-
 export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => void }) => {
-  const { data: chats, isLoading } = useQuery<Chat[]>({
+  const { user } = useAuth();
+  
+  const { data: chats, isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["chats"],
     queryFn: async () => {
+      // First get chats where the current user is a participant
+      const { data: chatIds, error: chatError } = await supabase
+        .from("chat_participants")
+        .select("chat_id")
+        .eq("user_id", user?.id);
+
+      if (chatError) throw chatError;
+      
+      if (!chatIds || chatIds.length === 0) {
+        return [];
+      }
+      
+      // Then get details for each chat
+      const chatIdList = chatIds.map(c => c.chat_id);
+      
       const { data, error } = await supabase
         .from("chats")
         .select(`
-          *,
-          chat_participants!inner (
-            user:user_id (
+          id, 
+          created_at
+        `)
+        .in("id", chatIdList)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      if (!data) return [];
+      
+      // For each chat, get the participants and latest message
+      const enhancedChats = await Promise.all(data.map(async (chat) => {
+        // Get participants
+        const { data: participantsData, error: participantsError } = await supabase
+          .from("chat_participants")
+          .select(`
+            user_id
+          `)
+          .eq("chat_id", chat.id)
+          .neq("user_id", user?.id);
+        
+        if (participantsError) throw participantsError;
+        
+        // Get profiles for participants
+        let participants = [];
+        if (participantsData && participantsData.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from("profiles")
+            .select(`
               id,
-              email,
-              profiles (
-                full_name,
-                avatar_url
-              )
-            )
-          ),
-          messages (
+              full_name,
+              avatar_url
+            `)
+            .in("id", participantsData.map(p => p.user_id));
+            
+          if (profilesError) throw profilesError;
+          participants = profilesData || [];
+        }
+        
+        // Get latest message
+        const { data: messagesData, error: messagesError } = await supabase
+          .from("messages")
+          .select(`
             content,
             created_at,
             sender_id
-          )
-        `)
-        .order("created_at", { foreignTable: "messages", ascending: false });
-
-      if (error) throw error;
-      return data as Chat[];
+          `)
+          .eq("chat_id", chat.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+          
+        if (messagesError) throw messagesError;
+        
+        return {
+          ...chat,
+          participants,
+          latest_message: messagesData && messagesData[0]
+        } as ChatWithDetails;
+      }));
+      
+      return enhancedChats;
     },
+    enabled: !!user,
   });
 
   if (isLoading) return <div>Loading chats...</div>;
+  
+  if (!chats || chats.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No chats yet</p>
+        <p className="text-sm">Start a conversation with a contact!</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
-      {chats?.map((chat) => (
+      {chats.map((chat) => (
         <div
           key={chat.id}
           className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
           onClick={() => onChatSelect(chat.id)}
         >
           <Avatar>
-            <AvatarImage src={chat.chat_participants[0].user.profiles.avatar_url ?? undefined} />
+            <AvatarImage 
+              src={chat.participants[0]?.avatar_url ?? undefined} 
+              alt={chat.participants[0]?.full_name}
+            />
             <AvatarFallback>
-              {chat.chat_participants[0].user.profiles.full_name[0]}
+              {chat.participants[0]?.full_name?.[0] || '?'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate">
-              {chat.chat_participants[0].user.profiles.full_name}
+              {chat.participants[0]?.full_name || "Unknown"}
             </p>
             <p className="text-sm text-gray-500 truncate">
-              {chat.messages[0]?.content || "No messages yet"}
+              {chat.latest_message?.content || "No messages yet"}
             </p>
           </div>
         </div>
