@@ -126,6 +126,7 @@ export type Database = {
           id: string
           last_seen: string | null
           status_message: string | null
+          user_code: number
         }
         Insert: {
           avatar_url?: string | null
@@ -134,6 +135,7 @@ export type Database = {
           id: string
           last_seen?: string | null
           status_message?: string | null
+          user_code: number
         }
         Update: {
           avatar_url?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           id?: string
           last_seen?: string | null
           status_message?: string | null
+          user_code?: number
         }
         Relationships: []
       }
@@ -183,7 +186,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_unique_user_code: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

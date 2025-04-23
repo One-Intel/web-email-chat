@@ -5,11 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { User, Image, Mail, Check } from "lucide-react";
+import { User, Image, Mail, Check, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Copy } from "lucide-react";
 
 export const Profile = () => {
   const { profile, isLoading, updateProfile, uploadAvatar } = useProfile();
@@ -18,6 +19,11 @@ export const Profile = () => {
   const [newName, setNewName] = useState(profile?.full_name || '');
   const [newStatus, setNewStatus] = useState(profile?.status_message || '');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setNewName(profile?.full_name || "");
+    setNewStatus(profile?.status_message || "");
+  }, [profile]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -40,6 +46,13 @@ export const Profile = () => {
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error("Failed to update profile");
+    }
+  };
+
+  const handleCopyUserCode = () => {
+    if (profile?.user_code) {
+      navigator.clipboard.writeText(profile.user_code.toString());
+      toast.success("User ID copied!");
     }
   };
 
@@ -106,7 +119,18 @@ export const Profile = () => {
               <p className="text-sm text-gray-500">{profile?.status_message || "No status"}</p>
               <div className="mt-2 flex items-center text-sm text-gray-500">
                 <User className="h-4 w-4 mr-1" />
-                <span>User ID: {user?.id?.slice(0, 5)}</span>
+                <span>
+                  User ID: 
+                  <span className="font-mono text-primary ml-1">{profile?.user_code}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="ml-1"
+                    onClick={handleCopyUserCode}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </span>
               </div>
               <div className="mt-1 flex items-center text-sm text-gray-500">
                 <Mail className="h-4 w-4 mr-1" />

@@ -10,6 +10,7 @@ export interface Profile {
   avatar_url?: string;
   status_message?: string;
   last_seen: string;
+  user_code: number; // 6-digit code
 }
 
 export const useProfile = () => {
