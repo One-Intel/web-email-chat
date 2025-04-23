@@ -2,10 +2,7 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Check, X, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Check, X, Clock, User } from "lucide-react";
 
 interface ContactItemProps {
   contact: any;
@@ -13,6 +10,7 @@ interface ContactItemProps {
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
   onChatStart?: (userId: string) => void;
+  onViewProfile?: (userId: string) => void;
 }
 
 export const ContactItem: React.FC<ContactItemProps> = ({
@@ -20,13 +18,18 @@ export const ContactItem: React.FC<ContactItemProps> = ({
   type,
   onAccept,
   onReject,
-  onChatStart
+  onChatStart,
+  onViewProfile
 }) => {
-  const queryClient = useQueryClient();
-
   const handleChatStart = () => {
     if (!onChatStart || !contact.profiles?.id) return;
     onChatStart(contact.profiles.id);
+  };
+  
+  const handleViewProfile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onViewProfile || !contact.profiles?.id) return;
+    onViewProfile(contact.profiles.id);
   };
   
   return (
@@ -70,37 +73,53 @@ export const ContactItem: React.FC<ContactItemProps> = ({
         </div>
       </div>
 
-      {type === "received" && (
-        <div className="flex space-x-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-green-500"
-            onClick={() => onAccept && onAccept(contact.id)}
-          >
-            <Check className="h-4 w-4" />
-          </Button>
+      <div className="flex space-x-1">
+        {/* View Profile button for all types */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          onClick={handleViewProfile}
+          title="View Profile"
+        >
+          <User className="h-4 w-4" />
+        </Button>
+        
+        {type === "received" && (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-green-500"
+              onClick={() => onAccept && onAccept(contact.id)}
+              title="Accept Request"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-red-500"
+              onClick={() => onReject && onReject(contact.id)}
+              title="Reject Request"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </>
+        )}
+
+        {type === "sent" && (
           <Button
             size="icon"
             variant="ghost"
             className="h-8 w-8 text-red-500"
             onClick={() => onReject && onReject(contact.id)}
+            title="Cancel Request"
           >
             <X className="h-4 w-4" />
           </Button>
-        </div>
-      )}
-
-      {type === "sent" && (
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 text-red-500"
-          onClick={() => onReject && onReject(contact.id)}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
+        )}
+      </div>
     </div>
   );
 };

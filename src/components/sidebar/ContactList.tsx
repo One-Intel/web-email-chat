@@ -128,9 +128,13 @@ export const ContactList = () => {
     }
   };
 
+  const viewUserProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
   const pendingCount = (receivedRequests?.length || 0);
 
-  if (isLoading) return <div>Loading contacts...</div>;
+  if (isLoading) return <div className="p-4 text-center">Loading contacts...</div>;
 
   return (
     <div className="space-y-4">
@@ -168,6 +172,7 @@ export const ContactList = () => {
                       onAccept={(id) => acceptContactRequest.mutate(id)}
                       onReject={(id) => rejectContactRequest.mutate(id)}
                       onChatStart={(userId) => startChat(userId)}
+                      onViewProfile={(userId) => viewUserProfile(userId)}
                     />
                   ))}
                 </div>
@@ -191,6 +196,7 @@ export const ContactList = () => {
                     type="sent"
                     onReject={(id) => rejectContactRequest.mutate(id)}
                     onChatStart={(userId) => startChat(userId)}
+                    onViewProfile={(userId) => viewUserProfile(userId)}
                   />
                 ))}
               </div>
@@ -199,23 +205,25 @@ export const ContactList = () => {
 
           {/* Friends */}
           <TabsContent value="contacts" className="mt-2 space-y-2">
-            {acceptedContacts?.length === 0 && (
+            {acceptedContacts?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No friends yet</p>
                 <p className="text-sm mt-1">Start connecting with people using their User ID!</p>
               </div>
+            ) : (
+              <div className="space-y-1">
+                {acceptedContacts?.map((contact) => (
+                  <ContactItem
+                    key={contact.id}
+                    contact={contact}
+                    type="contact"
+                    onChatStart={(userId) => startChat(userId)}
+                    onViewProfile={(userId) => viewUserProfile(userId)}
+                  />
+                ))}
+              </div>
             )}
-            <div className="space-y-1">
-              {acceptedContacts?.map((contact) => (
-                <ContactItem
-                  key={contact.id}
-                  contact={contact}
-                  type="contact"
-                  onChatStart={(userId) => startChat(userId)}
-                />
-              ))}
-            </div>
           </TabsContent>
         </Tabs>
       </div>

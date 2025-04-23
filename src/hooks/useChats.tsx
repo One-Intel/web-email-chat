@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -59,7 +58,7 @@ export const useChats = () => {
       if (!chatsData) return [];
 
       // Process each chat to get participants and last message
-      const chatsWithParticipants: ChatWithParticipants[] = await Promise.all(
+      const chatsWithParticipants = await Promise.all(
         chatsData.map(async (chat) => {
           // Get participants for this chat with their profiles
           const { data: chatParticipants, error: participantsError } = await supabase
@@ -113,7 +112,7 @@ export const useChats = () => {
             ...chat,
             participants,
             last_message: lastMessageData || undefined,
-          };
+          } as ChatWithParticipants; // Explicitly cast to expected type
         })
       );
 

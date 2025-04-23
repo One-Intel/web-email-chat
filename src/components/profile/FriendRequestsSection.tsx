@@ -22,7 +22,7 @@ interface Props {
   onMessage?: (userId: string) => void;
 }
 
-export const FriendRequestsSection: React.FC<Props> = ({
+const FriendRequestsSection: React.FC<Props> = ({
   title, requests, type, onAccept, onReject, onMessage
 }) => (
   <div>
@@ -35,10 +35,10 @@ export const FriendRequestsSection: React.FC<Props> = ({
           <div key={item.id} className="flex items-center justify-between gap-2 p-2 rounded hover:bg-muted">
             <div className="flex items-center gap-3 flex-1">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={item.profiles.avatar_url ?? undefined} alt={item.profiles.full_name} />
-                <AvatarFallback>{item.profiles.full_name?.[0] || "?"}</AvatarFallback>
+                <AvatarImage src={item.profiles?.avatar_url ?? undefined} alt={item.profiles?.full_name} />
+                <AvatarFallback>{item.profiles?.full_name?.[0] || "?"}</AvatarFallback>
               </Avatar>
-              <span className="font-medium">{item.profiles.full_name}</span>
+              <span className="font-medium">{item.profiles?.full_name || "Unknown User"}</span>
             </div>
             <div className="flex gap-1">
               {type === "received" && (
@@ -49,13 +49,13 @@ export const FriendRequestsSection: React.FC<Props> = ({
                   <Button size="icon" variant="ghost" onClick={() => onReject?.(item.id)}>
                     <X className="h-4 w-4 text-red-600" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => onMessage?.(item.profiles.id)}>
+                  <Button size="icon" variant="ghost" onClick={() => onMessage?.(item.profiles?.id)}>
                     <MessageSquare className="h-4 w-4" />
                   </Button>
                 </>
               )}
               {type === "sent" && (
-                <Button size="icon" variant="ghost" onClick={() => onMessage?.(item.profiles.id)}>
+                <Button size="icon" variant="ghost" onClick={() => onMessage?.(item.profiles?.id)}>
                   <MessageSquare className="h-4 w-4" />
                 </Button>
               )}
