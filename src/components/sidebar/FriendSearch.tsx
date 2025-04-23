@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 interface FriendSearchProps {
-  onSearch: (userCode: string) => Promise<void>;
+  onSearch: (data: { userCode: string }) => Promise<void>;
   searchResult: any;
   searchError: string | null;
   searchLoading: boolean;
