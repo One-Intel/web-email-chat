@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -30,26 +29,23 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   // Get all chats for the current user
-  const { data: chats, isLoading, error } = useQuery({
+  const { data: chats, isLoading, error } = useQuery<ChatWithParticipants[]>({
     queryKey: ["chats"],
     queryFn: async () => {
       if (!user) return [];
 
-      // Get all chats where the current user is a participant
+      // Get all chat IDs where current user is a participant
       const { data: chatParticipants, error: chatError } = await supabase
         .from("chat_participants")
-        .select(`
-          chat_id
-        `)
+        .select("chat_id")
         .eq("user_id", user.id);
 
       if (chatError) throw chatError;
       if (!chatParticipants || chatParticipants.length === 0) return [];
 
-      // Get the actual chats with their participants
       const chatIds = chatParticipants.map(cp => cp.chat_id);
-      
-      // Updated query to fix the profiles relationship
+
+      // Get the chats with participants & their profiles (fix join for supabase profiles)
       const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
         .select(`
@@ -57,7 +53,7 @@ export const useChats = () => {
           created_at,
           participants:chat_participants(
             user_id,
-            profiles:profiles!user_id(
+            profiles:profiles(
               id,
               full_name,
               avatar_url,
@@ -70,7 +66,7 @@ export const useChats = () => {
 
       if (chatsError) throw chatsError;
 
-      // Get the last message for each chat
+      // Get last message for each chat
       const chatsWithLastMessages: ChatWithParticipants[] = await Promise.all(
         (chatsData || []).map(async chat => {
           const { data: lastMessageData, error: lastMessageError } = await supabase
@@ -79,15 +75,17 @@ export const useChats = () => {
             .eq("chat_id", chat.id)
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-          if (lastMessageError && lastMessageError.code !== 'PGRST116') {
-            console.error("Error fetching last message:", lastMessageError);
-          }
+          // Safe-guard: filter out participants with missing profiles
+          const cleanedParticipants = (chat.participants || []).filter(
+            (p: any) => p.profiles && p.profiles.id
+          );
 
           return {
             ...chat,
-            last_message: lastMessageData || undefined
+            participants: cleanedParticipants,
+            last_message: lastMessageData || undefined,
           } as ChatWithParticipants;
         })
       );
