@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,10 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 type ChatWithDetails = Database['public']['Tables']['chats']['Row'] & {
   participants: {
     id: string;
-    profiles: {
-      full_name: string;
-      avatar_url: string | null;
-    };
+    full_name: string;
+    avatar_url: string | null;
   }[];
   latest_message?: {
     content: string | null;
@@ -26,47 +25,75 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
   const { data: chats, isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["chats"],
     queryFn: async () => {
-      const { data: chatIds, error: chatError } = await supabase
+      if (!user?.id) {
+        return [];
+      }
+
+      // First get the chat IDs the user is part of
+      const { data: chatParticipants, error: participantsError } = await supabase
         .from("chat_participants")
         .select("chat_id")
-        .eq("user_id", user?.id);
+        .eq("user_id", user.id);
 
-      if (chatError) throw chatError;
-      
-      if (!chatIds || chatIds.length === 0) {
+      if (participantsError) throw participantsError;
+      if (!chatParticipants || chatParticipants.length === 0) {
         return [];
       }
       
-      const chatIdList = chatIds.map(c => c.chat_id);
-      
-      const { data, error } = await supabase
+      const chatIds = chatParticipants.map(cp => cp.chat_id);
+
+      // Get all chats with these IDs
+      const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
-        .select(`
-          id, 
-          created_at,
-          participants:chat_participants(
-            user:profiles(
-              id,
-              full_name,
-              avatar_url
-            )
-          )
-        `)
-        .in("id", chatIdList)
-        .order("created_at", { ascending: false });
+        .select("id, created_at")
+        .in("id", chatIds);
       
-      if (error) throw error;
-      if (!data) return [];
+      if (chatsError) throw chatsError;
+      if (!chatsData) return [];
       
-      const enhancedChats = data.map(chat => {
-        const otherParticipant = chat.participants
-          ?.find(p => p.user.id !== user?.id)?.user;
+      // For each chat, get the participants
+      const enhancedChats: ChatWithDetails[] = [];
+      
+      for (const chat of chatsData) {
+        // Get all participants for this chat
+        const { data: participantsData, error: participantsQueryError } = await supabase
+          .from("chat_participants")
+          .select("user_id")
+          .eq("chat_id", chat.id);
+          
+        if (participantsQueryError) throw participantsQueryError;
+        if (!participantsData) continue;
         
-        return {
+        // Get profile data for each participant (excluding the current user)
+        const otherParticipantIds = participantsData
+          .filter(p => p.user_id !== user.id)
+          .map(p => p.user_id);
+          
+        if (otherParticipantIds.length === 0) continue;
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", otherParticipantIds);
+          
+        if (profilesError) throw profilesError;
+        if (!profilesData) continue;
+        
+        // Get latest message for this chat
+        const { data: latestMessage, error: messageError } = await supabase
+          .from("messages")
+          .select("content, created_at, sender_id")
+          .eq("chat_id", chat.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+          
+        enhancedChats.push({
           ...chat,
-          participants: otherParticipant ? [otherParticipant] : []
-        };
-      });
+          participants: profilesData,
+          latest_message: messageError ? undefined : latestMessage
+        });
+      }
       
       return enhancedChats;
     },
@@ -86,7 +113,7 @@ export const ChatList = ({ onChatSelect }: { onChatSelect: (chatId: string) => v
 
   return (
     <div className="space-y-2">
-      {chats?.map((chat) => {
+      {chats.map((chat) => {
         const participant = chat.participants?.[0];
         
         return (
