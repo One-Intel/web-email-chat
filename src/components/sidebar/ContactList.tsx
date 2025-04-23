@@ -1,19 +1,16 @@
 
 import React, { useState } from "react";
 import { useContacts } from "@/hooks/useContacts";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Plus, Mail, Check, X, UserPlus, Clock, Users, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
+import { Plus, Mail, Users, Search, UserPlus, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { ContactItem } from "./ContactItems";
+import { FriendSearch } from "./FriendSearch";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const ContactList = () => {
   const { 
@@ -26,14 +23,13 @@ export const ContactList = () => {
     rejectContactRequest 
   } = useContacts();
   
-  const { register, handleSubmit, reset } = useForm<{ userCode: string }>();
-  const [isOpen, setIsOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Add user by 6-digit code (new logic)
+  // Add user by 6-digit code
   const onFindFriends = async (data: { userCode: string }) => {
     setSearchLoading(true);
     setSearchError(null);
@@ -76,6 +72,59 @@ export const ContactList = () => {
     }
   };
 
+  // Create a chat with a user (even if not yet a friend)
+  const startChat = async (contactId: string) => {
+    try {
+      const { data: existingChat, error: checkError } = await supabase
+        .from("chat_participants")
+        .select("chat_id")
+        .eq("user_id", user?.id)
+        .filter('chat_id', 'in', (qb) => {
+          qb.select('chat_id')
+            .from('chat_participants')
+            .eq('user_id', contactId);
+        });
+
+      if (checkError) throw checkError;
+      
+      let chatId;
+      
+      // If no existing chat, create one
+      if (!existingChat || existingChat.length === 0) {
+        // Create new chat
+        const { data: newChat, error: chatError } = await supabase
+          .from("chats")
+          .insert({})
+          .select()
+          .single();
+          
+        if (chatError) throw chatError;
+        
+        chatId = newChat.id;
+        
+        // Add both users as participants
+        const { error: participantError } = await supabase
+          .from("chat_participants")
+          .insert([
+            { chat_id: chatId, user_id: user?.id },
+            { chat_id: chatId, user_id: contactId }
+          ]);
+          
+        if (participantError) throw participantError;
+      } else {
+        chatId = existingChat[0].chat_id;
+      }
+      
+      // Invalidate chats cache to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      
+      // TODO: Navigate to the chat (will be handled by parent component)
+      return chatId;
+    } catch (error: any) {
+      toast.error("Failed to start chat: " + error.message);
+    }
+  };
+
   const pendingCount = (receivedRequests?.length || 0);
 
   if (isLoading) return <div>Loading contacts...</div>;
@@ -107,47 +156,18 @@ export const ContactList = () => {
                   <UserPlus className="h-4 w-4 mr-2" />
                   Received Invites
                 </h3>
-                {receivedRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between space-x-3 p-2 hover:bg-accent rounded-md"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={request.profiles?.avatar_url ?? undefined} />
-                        <AvatarFallback>
-                          {request.profiles?.full_name?.[0] || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {request.profiles?.full_name || "Unknown"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Wants to connect with you
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-green-500"
-                        onClick={() => acceptContactRequest.mutate(request.id)}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-red-500"
-                        onClick={() => rejectContactRequest.mutate(request.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                <div className="space-y-1">
+                  {receivedRequests.map((request) => (
+                    <ContactItem
+                      key={request.id}
+                      contact={request}
+                      type="received"
+                      onAccept={(id) => acceptContactRequest.mutate(id)}
+                      onReject={(id) => rejectContactRequest.mutate(id)}
+                      onChatStart={(userId) => startChat(userId)}
+                    />
+                  ))}
+                </div>
                 <Separator className="my-2" />
               </>
             )}
@@ -160,38 +180,17 @@ export const ContactList = () => {
                 <p className="text-sm">No pending invites</p>
               </div>
             ) : (
-              sentRequests?.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between space-x-3 p-2 hover:bg-accent rounded-md"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={request.profiles?.avatar_url ?? undefined} />
-                      <AvatarFallback>
-                        {request.profiles?.full_name?.[0] || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
-                        {request.profiles?.full_name || "Unknown"}
-                      </p>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-3 w-3 text-yellow-500" />
-                        <p className="text-xs text-gray-500">Pending</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-red-500"
-                    onClick={() => rejectContactRequest.mutate(request.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))
+              <div className="space-y-1">
+                {sentRequests?.map((request) => (
+                  <ContactItem
+                    key={request.id}
+                    contact={request}
+                    type="sent"
+                    onReject={(id) => rejectContactRequest.mutate(id)}
+                    onChatStart={(userId) => startChat(userId)}
+                  />
+                ))}
+              </div>
             )}
           </TabsContent>
 
@@ -204,80 +203,27 @@ export const ContactList = () => {
                 <p className="text-sm mt-1">Start connecting with people using their User ID!</p>
               </div>
             )}
-            {acceptedContacts?.map((contact) => (
-              <div
-                key={contact.id}
-                className="flex items-center space-x-3 p-2 hover:bg-accent rounded-md cursor-pointer"
-              >
-                <Avatar>
-                  <AvatarImage src={contact.profiles?.avatar_url ?? undefined} />
-                  <AvatarFallback>
-                    {contact.profiles?.full_name?.[0] || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {contact.profiles?.full_name || "Unknown"}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {contact.profiles?.status_message || "Available"}
-                  </p>
-                </div>
-              </div>
-            ))}
+            <div className="space-y-1">
+              {acceptedContacts?.map((contact) => (
+                <ContactItem
+                  key={contact.id}
+                  contact={contact}
+                  type="contact"
+                  onChatStart={(userId) => startChat(userId)}
+                />
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      <Card className="p-3 space-y-2">
-        <div className="flex items-center mb-2">
-          <Search className="h-4 w-4 mr-2" />
-          <span className="font-medium">
-            Find Friends
-          </span>
-        </div>
-        <form
-          onSubmit={handleSubmit(onFindFriends)}
-          className="flex space-x-2"
-        >
-          <Input
-            {...register("userCode", { required: true, minLength: 6, maxLength: 6, pattern: /^[0-9]+$/ })}
-            placeholder="Enter 6-digit User ID"
-            maxLength={6}
-            minLength={6}
-            className="font-mono"
-          />
-          <Button type="submit" variant="default" disabled={searchLoading}>
-            {searchLoading ? "..." : "Search"}
-          </Button>
-        </form>
-        {searchError && (
-          <p className="text-xs text-red-500">{searchError}</p>
-        )}
-        {searchResult && (
-          <div className="flex items-center justify-between mt-2 bg-accent/50 p-2 rounded">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={searchResult.avatar_url || undefined} />
-                <AvatarFallback>
-                  {searchResult.full_name?.[0] || '?'}
-                </AvatarFallback>
-              </Avatar>
-              <span>{searchResult.full_name}</span>
-            </div>
-            <Button
-              size="sm"
-              onClick={handleAddFriend}
-              variant="default"  // Changed from "success" to "default"
-            >
-              Add Friend
-            </Button>
-          </div>
-        )}
-        <p className="mt-1 text-xs text-muted-foreground">
-          Enter your friend's User ID to send a friend request.
-        </p>
-      </Card>
+      <FriendSearch
+        onSearch={onFindFriends}
+        searchResult={searchResult}
+        searchError={searchError}
+        searchLoading={searchLoading}
+        onAddFriend={handleAddFriend}
+      />
     </div>
   );
 };

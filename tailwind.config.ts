@@ -26,13 +26,14 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				webchat: {
-					primary: '#25D366',    // WhatsApp green
-					light: '#DCF8C6',      // Light green bubble
-					bg: '#ECE5DD',         // Chat background
-					secondary: '#128C7E',  // Darker green
-					read: '#4FC3F7',       // Blue for read receipts
-					hover: '#F5F5F5',      // Hover state
-					dark: '#075E54'         // Dark green
+					primary: 'var(--webchat-primary)',
+					dark: 'var(--webchat-dark)',
+					light: 'var(--webchat-light)',
+					bg: 'var(--webchat-bg)',
+					bubble: 'var(--webchat-bubble)',
+					'bubble-me': 'var(--webchat-bubble-me)',
+					hover: '#F5F5F5',
+					read: '#4FC3F7'
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
