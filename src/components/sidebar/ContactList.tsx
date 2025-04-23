@@ -36,24 +36,30 @@ export const ContactList = () => {
     friendSearchLoading, 
     friendSearchResult, 
     friendSearchError, 
-    setFriendSearchResult 
+    setFriendSearchResult,
+    clearSearchResult
   } = useFriendSearch();
 
   const handleAddFriend = async () => {
     if (!friendSearchResult) return;
     try {
       await addContact.mutateAsync(friendSearchResult.id);
-      setFriendSearchResult(null);
+      clearSearchResult();
     } catch (err: any) {
       // Toast covered in useContacts
     }
+  };
+
+  const handleStartChatFromSearch = async (userId: string) => {
+    await startChat(userId);
+    clearSearchResult();
   };
 
   const viewUserProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
   };
 
-  const pendingCount = (receivedRequests?.length || 0);
+  const pendingCount = receivedRequests?.length || 0;
 
   if (isLoading) return <div className="p-4 text-center">Loading contacts...</div>;
 
@@ -104,6 +110,7 @@ export const ContactList = () => {
         searchError={friendSearchError}
         searchLoading={friendSearchLoading}
         onAddFriend={handleAddFriend}
+        onStartChat={handleStartChatFromSearch}
       />
     </div>
   );

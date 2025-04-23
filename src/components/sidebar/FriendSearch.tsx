@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 
@@ -22,6 +22,7 @@ interface FriendSearchProps {
   searchError: string | null;
   searchLoading: boolean;
   onAddFriend: () => void;
+  onStartChat?: (userId: string) => void;
 }
 
 export const FriendSearch = ({
@@ -29,7 +30,8 @@ export const FriendSearch = ({
   searchResult,
   searchError,
   searchLoading,
-  onAddFriend
+  onAddFriend,
+  onStartChat
 }: FriendSearchProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -37,6 +39,12 @@ export const FriendSearch = ({
       userCode: "",
     },
   });
+
+  const handleStartChat = () => {
+    if (searchResult && onStartChat) {
+      onStartChat(searchResult.id);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -83,15 +91,26 @@ export const FriendSearch = ({
               <p className="font-medium">{searchResult.full_name}</p>
             </div>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="space-x-1"
-            onClick={onAddFriend}
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Add Friend</span>
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="space-x-1"
+              onClick={handleStartChat}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Chat</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="space-x-1"
+              onClick={onAddFriend}
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Add</span>
+            </Button>
+          </div>
         </Card>
       )}
     </div>

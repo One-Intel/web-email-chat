@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -34,89 +35,76 @@ export const useChats = () => {
     queryFn: async () => {
       if (!user) return [];
 
-      // Get all chat IDs where current user is a participant
-      const { data: chatParticipants, error: chatError } = await supabase
-        .from("chat_participants")
-        .select("chat_id")
-        .eq("user_id", user.id);
+      try {
+        // Get all chat IDs where current user is a participant
+        const { data: chatParticipants, error: chatError } = await supabase
+          .from("chat_participants")
+          .select("chat_id")
+          .eq("user_id", user.id);
 
-      if (chatError) throw chatError;
-      if (!chatParticipants || chatParticipants.length === 0) return [];
+        if (chatError) throw chatError;
+        if (!chatParticipants || chatParticipants.length === 0) return [];
 
-      const chatIds = chatParticipants.map(cp => cp.chat_id);
+        const chatIds = chatParticipants.map(cp => cp.chat_id);
 
-      // Get the chats 
-      const { data: chatsData, error: chatsError } = await supabase
-        .from("chats")
-        .select(`
-          id,
-          created_at
-        `)
-        .in("id", chatIds);
+        // Get the chats 
+        const { data: chatsData, error: chatsError } = await supabase
+          .from("chats")
+          .select(`
+            id,
+            created_at
+          `)
+          .in("id", chatIds);
 
-      if (chatsError) throw chatsError;
-      if (!chatsData) return [];
+        if (chatsError) throw chatsError;
+        if (!chatsData) return [];
 
-      // Process each chat to get participants and last message
-      const chatsWithParticipants = await Promise.all(
-        chatsData.map(async (chat) => {
-          // Get participants for this chat with their profiles
-          const { data: chatParticipants, error: participantsError } = await supabase
-            .from("chat_participants")
-            .select("user_id")
-            .eq("chat_id", chat.id);
+        // Process each chat to get participants and last message
+        const chatsWithParticipants = await Promise.all(
+          chatsData.map(async (chat) => {
+            // Get participants for this chat with their profiles
+            const { data: participants, error: participantsError } = await supabase
+              .from("chat_participants")
+              .select(`
+                user_id,
+                profiles:user_id (
+                  id, 
+                  full_name, 
+                  avatar_url, 
+                  status_message, 
+                  last_seen
+                )
+              `)
+              .eq("chat_id", chat.id);
 
-          if (participantsError) throw participantsError;
+            if (participantsError) throw participantsError;
 
-          // Get profiles for each participant
-          const participants = await Promise.all(
-            (chatParticipants || []).map(async (participant) => {
-              const { data: profile, error: profileError } = await supabase
-                .from("profiles")
-                .select("id, full_name, avatar_url, status_message, last_seen")
-                .eq("id", participant.user_id)
-                .single();
+            // Get last message for this chat
+            const { data: lastMessageData, error: lastMessageError } = await supabase
+              .from("messages")
+              .select("content, created_at, sender_id, is_deleted")
+              .eq("chat_id", chat.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
-              if (profileError) {
-                console.error("Error fetching profile:", profileError);
-                // Return a default profile structure to maintain type safety
-                return {
-                  user_id: participant.user_id,
-                  profiles: {
-                    id: participant.user_id,
-                    full_name: "Unknown User",
-                    avatar_url: null,
-                    status_message: null,
-                    last_seen: null
-                  }
-                };
-              }
+            if (lastMessageError) {
+              console.error("Error fetching last message:", lastMessageError);
+            }
 
-              return {
-                user_id: participant.user_id,
-                profiles: profile
-              };
-            })
-          );
+            return {
+              ...chat,
+              participants: participants || [],
+              last_message: lastMessageData || undefined,
+            } as ChatWithParticipants;
+          })
+        );
 
-          // Get last message for this chat
-          const { data: lastMessageData, error: lastMessageError } = await supabase
-            .from("messages")
-            .select("content, created_at, sender_id, is_deleted")
-            .eq("chat_id", chat.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          return {
-            ...chat,
-            participants,
-            last_message: lastMessageData || undefined,
-          } as ChatWithParticipants; // Explicitly cast to expected type
-        })
-      );
-
-      return chatsWithParticipants;
+        return chatsWithParticipants;
+      } catch (err) {
+        console.error("Error in useChats:", err);
+        throw err;
+      }
     },
     enabled: !!user,
   });
