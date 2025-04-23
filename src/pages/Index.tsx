@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Navigate } from "react-router-dom";
-import AppLayout from "@/components/layout/AppLayout";
+import WispaChat from "@/components/layout/WispaChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,7 +28,7 @@ const Index = () => {
   };
 
   return (
-    <AppLayout>
+    <WispaChat>
       <div className="flex w-full h-full">
         {(showSidebar || !isMobile) && (
           <div className={`${isMobile ? "w-full" : "w-1/3"} max-w-sm border-r bg-background flex flex-col`}>
@@ -45,7 +44,6 @@ const Index = () => {
             </div>
           </div>
         )}
-
         {(!showSidebar || !isMobile) && (
           <div className={`${isMobile ? "w-full" : "flex-1"}`}>
             <ChatWindow
@@ -64,7 +62,7 @@ const Index = () => {
           </button>
         )}
       </div>
-    </AppLayout>
+    </WispaChat>
   );
 };
 
