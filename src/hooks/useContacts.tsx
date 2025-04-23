@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,9 +24,8 @@ export const useContacts = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Self as a contact (for display/future features)
       // Fetch both "forward" and "reverse" contacts
-      const { data: direct } = await supabase
+      const { data: direct, error: directError } = await supabase
         .from("contacts")
         .select(`
           *,
@@ -35,7 +35,13 @@ export const useContacts = () => {
         `)
         .eq("user_id", user.id)
         .eq("status", "accepted");
-      const { data: reverse } = await supabase
+      
+      if (directError) {
+        console.error("Error fetching direct contacts:", directError);
+        return [];
+      }
+
+      const { data: reverse, error: reverseError } = await supabase
         .from("contacts")
         .select(`
           *,
@@ -45,9 +51,18 @@ export const useContacts = () => {
         `)
         .eq("contact_id", user.id)
         .eq("status", "accepted");
+      
+      if (reverseError) {
+        console.error("Error fetching reverse contacts:", reverseError);
+        return [];
+      }
 
-      const contacts = [...(direct ?? []), ...(reverse ?? [])];
-      return (contacts ?? []).filter(c => c.profiles && c.profiles.id !== user.id);
+      const contacts = [...(direct || []), ...(reverse || [])];
+      return contacts.filter(c => 
+        c.profiles && 
+        typeof c.profiles !== 'string' && // Filter out any error objects
+        c.profiles.id !== user.id
+      );
     },
   });
 
@@ -57,7 +72,8 @@ export const useContacts = () => {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
-      const { data } = await supabase
+      
+      const { data, error } = await supabase
         .from("contacts")
         .select(`
           *,
@@ -67,7 +83,15 @@ export const useContacts = () => {
         `)
         .eq("user_id", user.id)
         .eq("status", "pending");
-      return data ?? [];
+      
+      if (error) {
+        console.error("Error fetching sent requests:", error);
+        return [];
+      }
+      
+      return data?.filter(item => 
+        item.profiles && typeof item.profiles !== 'string'
+      ) || [];
     },
   });
 
@@ -77,7 +101,8 @@ export const useContacts = () => {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
-      const { data } = await supabase
+      
+      const { data, error } = await supabase
         .from("contacts")
         .select(`
           *,
@@ -87,7 +112,15 @@ export const useContacts = () => {
         `)
         .eq("contact_id", user.id)
         .eq("status", "pending");
-      return data ?? [];
+      
+      if (error) {
+        console.error("Error fetching received requests:", error);
+        return [];
+      }
+      
+      return data?.filter(item => 
+        item.profiles && typeof item.profiles !== 'string'
+      ) || [];
     },
   });
 

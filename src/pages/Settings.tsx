@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,11 @@ const SettingsPage = () => {
   }, [profile]);
 
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTheme(e.target.value);
-    document.documentElement.classList.toggle('dark', e.target.value === "dark");
+    const newTheme = e.target.value;
+    setTheme(newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === "dark");
     if (profile?.id) {
-      updateProfile.mutate({ theme: e.target.value });
+      updateProfile.mutate({ theme: newTheme });
     }
   };
 
