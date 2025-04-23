@@ -24,7 +24,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
       p => p.user_id !== user?.id
     );
     
-    const otherUser = otherParticipants[0]?.profiles;
+    const otherUser = otherParticipants.length > 0 ? otherParticipants[0].profiles : null;
     
     return {
       id: chat.id,

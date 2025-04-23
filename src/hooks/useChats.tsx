@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -29,7 +30,7 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   // Get all chats for the current user
-  const { data: chats, isLoading, error } = useQuery<ChatWithParticipants[]>({
+  const { data: chats, isLoading, error } = useQuery({
     queryKey: ["chats"],
     queryFn: async () => {
       if (!user) return [];
@@ -45,30 +46,39 @@ export const useChats = () => {
 
       const chatIds = chatParticipants.map(cp => cp.chat_id);
 
-      // Get the chats with participants & their profiles (fix join for supabase profiles)
+      // Get the chats with participants & their profiles
       const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
         .select(`
           id,
-          created_at,
-          participants:chat_participants(
-            user_id,
-            profiles:profiles(
-              id,
-              full_name,
-              avatar_url,
-              status_message,
-              last_seen
-            )
-          )
+          created_at
         `)
         .in("id", chatIds);
 
       if (chatsError) throw chatsError;
+      if (!chatsData) return [];
 
-      // Get last message for each chat
-      const chatsWithLastMessages: ChatWithParticipants[] = await Promise.all(
-        (chatsData || []).map(async chat => {
+      // Fetch participants for each chat
+      const chatsWithParticipants: ChatWithParticipants[] = await Promise.all(
+        chatsData.map(async (chat) => {
+          // Get participants for this chat
+          const { data: participants, error: participantsError } = await supabase
+            .from("chat_participants")
+            .select(`
+              user_id,
+              profiles:profiles(
+                id,
+                full_name,
+                avatar_url,
+                status_message,
+                last_seen
+              )
+            `)
+            .eq("chat_id", chat.id);
+
+          if (participantsError) throw participantsError;
+
+          // Get last message for this chat
           const { data: lastMessageData, error: lastMessageError } = await supabase
             .from("messages")
             .select("content, created_at, sender_id, is_deleted")
@@ -77,20 +87,18 @@ export const useChats = () => {
             .limit(1)
             .maybeSingle();
 
-          // Safe-guard: filter out participants with missing profiles
-          const cleanedParticipants = (chat.participants || []).filter(
-            (p: any) => p.profiles && p.profiles.id
-          );
+          // Filter out participants with missing profiles
+          const validParticipants = participants?.filter(p => p.profiles !== null) || [];
 
           return {
             ...chat,
-            participants: cleanedParticipants,
+            participants: validParticipants,
             last_message: lastMessageData || undefined,
           } as ChatWithParticipants;
         })
       );
 
-      return chatsWithLastMessages;
+      return chatsWithParticipants;
     },
     enabled: !!user,
   });
@@ -100,21 +108,36 @@ export const useChats = () => {
       if (!user) throw new Error("User not authenticated");
       
       // Check if a chat already exists between these users
-      const { data: existingChats, error: checkError } = await supabase
+      const { data: existingChatsData, error: checkError } = await supabase
         .from("chat_participants")
         .select("chat_id")
-        .eq("user_id", user.id)
-        .in("chat_id", supabase
-          .from("chat_participants")
-          .select("chat_id")
-          .eq("user_id", otherUserId)
-        );
+        .eq("user_id", user.id);
 
       if (checkError) throw checkError;
       
-      if (existingChats && existingChats.length > 0) {
-        // Chat already exists, return the chat ID
-        return existingChats[0].chat_id;
+      // If we have chat IDs, check if any of them include the other user
+      let existingChatId: string | null = null;
+      
+      if (existingChatsData && existingChatsData.length > 0) {
+        const chatIds = existingChatsData.map(item => item.chat_id);
+        
+        // Find chats where other user is a participant
+        const { data: otherUserChats, error: otherUserError } = await supabase
+          .from("chat_participants")
+          .select("chat_id")
+          .eq("user_id", otherUserId)
+          .in("chat_id", chatIds);
+          
+        if (otherUserError) throw otherUserError;
+        
+        if (otherUserChats && otherUserChats.length > 0) {
+          existingChatId = otherUserChats[0].chat_id;
+        }
+      }
+      
+      // If found an existing chat, return its ID
+      if (existingChatId) {
+        return existingChatId;
       }
       
       // Create a new chat
