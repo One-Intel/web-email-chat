@@ -268,7 +268,7 @@ export const ContactList = () => {
             <Button
               size="sm"
               onClick={handleAddFriend}
-              variant="success"
+              variant="default"  // Changed from "success" to "default"
             >
               Add Friend
             </Button>
