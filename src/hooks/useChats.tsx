@@ -30,7 +30,7 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   // Get all chats for the current user
-  const { data: chats, isLoading, error } = useQuery<ChatWithParticipants[]>({
+  const { data: chats, isLoading, error } = useQuery({
     queryKey: ["chats"],
     queryFn: async () => {
       if (!user) return [];
@@ -49,14 +49,15 @@ export const useChats = () => {
       // Get the actual chats with their participants
       const chatIds = chatParticipants.map(cp => cp.chat_id);
       
+      // Updated query to fix the profiles relationship
       const { data: chatsData, error: chatsError } = await supabase
         .from("chats")
         .select(`
           id,
           created_at,
-          participants:chat_participants!inner(
+          participants:chat_participants(
             user_id,
-            profiles:user_id(
+            profiles:profiles!user_id(
               id,
               full_name,
               avatar_url,
@@ -70,7 +71,7 @@ export const useChats = () => {
       if (chatsError) throw chatsError;
 
       // Get the last message for each chat
-      const chatsWithLastMessages = await Promise.all(
+      const chatsWithLastMessages: ChatWithParticipants[] = await Promise.all(
         (chatsData || []).map(async chat => {
           const { data: lastMessageData, error: lastMessageError } = await supabase
             .from("messages")
@@ -87,7 +88,7 @@ export const useChats = () => {
           return {
             ...chat,
             last_message: lastMessageData || undefined
-          };
+          } as ChatWithParticipants;
         })
       );
 

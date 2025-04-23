@@ -18,8 +18,8 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
   if (isLoading) return <div className="p-3">Loading chats...</div>;
   if (error) return <div className="p-3 text-red-500">Error loading chats</div>;
 
-  // Filter out users who aren't the current user
-  const processedChats = chats?.map(chat => {
+  // Make sure chats is an array before mapping
+  const processedChats = Array.isArray(chats) ? chats.map(chat => {
     const otherParticipants = chat.participants.filter(
       p => p.user_id !== user?.id
     );
@@ -36,7 +36,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
       unread: 0, // We'll implement this later
       avatar: otherUser?.avatar_url || "",
     };
-  });
+  }) : [];
 
   return (
     <div className="space-y-4">
@@ -45,7 +45,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
         Chats
       </h2>
 
-      {processedChats?.length === 0 ? (
+      {processedChats.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
           <p>No chats yet</p>
@@ -54,7 +54,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
       ) : (
         <>
           <div className="space-y-1">
-            {processedChats?.map((chat) => (
+            {processedChats.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
