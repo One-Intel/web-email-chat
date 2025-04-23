@@ -62,22 +62,43 @@ export const useChats = () => {
         // Process each chat to get participants and last message
         const chatsWithParticipants = await Promise.all(
           chatsData.map(async (chat) => {
-            // Get participants for this chat with their profiles
+            // Get participants for this chat
             const { data: participants, error: participantsError } = await supabase
               .from("chat_participants")
-              .select(`
-                user_id,
-                profiles:user_id (
-                  id, 
-                  full_name, 
-                  avatar_url, 
-                  status_message, 
-                  last_seen
-                )
-              `)
+              .select("user_id")
               .eq("chat_id", chat.id);
 
             if (participantsError) throw participantsError;
+            
+            // For each participant, get their profile separately
+            const participantsWithProfiles = await Promise.all(
+              (participants || []).map(async (participant) => {
+                const { data: profile, error: profileError } = await supabase
+                  .from("profiles")
+                  .select("id, full_name, avatar_url, status_message, last_seen")
+                  .eq("id", participant.user_id)
+                  .single();
+                
+                if (profileError) {
+                  console.error("Error fetching profile:", profileError);
+                  return {
+                    user_id: participant.user_id,
+                    profiles: {
+                      id: participant.user_id,
+                      full_name: "Unknown User",
+                      avatar_url: null,
+                      status_message: null,
+                      last_seen: null
+                    }
+                  };
+                }
+                
+                return {
+                  user_id: participant.user_id,
+                  profiles: profile
+                };
+              })
+            );
 
             // Get last message for this chat
             const { data: lastMessageData, error: lastMessageError } = await supabase
@@ -94,7 +115,7 @@ export const useChats = () => {
 
             return {
               ...chat,
-              participants: participants || [],
+              participants: participantsWithProfiles,
               last_message: lastMessageData || undefined,
             } as ChatWithParticipants;
           })
