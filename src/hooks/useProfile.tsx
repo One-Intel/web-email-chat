@@ -11,9 +11,9 @@ export interface Profile {
   status_message?: string;
   last_seen: string;
   user_code: number; // 6-digit code
+  theme?: string; // Add theme to the Profile interface
 }
 
-// The theme is actually stored in user_settings table, not profiles
 export const useProfile = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -22,27 +22,37 @@ export const useProfile = () => {
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (error) throw error;
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (error) throw error;
 
-      // Fetch user settings which contains theme
-      const { data: settingsData, error: settingsError } = await supabase
-        .from("user_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        // Fetch user settings which contains theme
+        const { data: settingsData, error: settingsError } = await supabase
+          .from("user_settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (settingsError) console.error("Error fetching settings:", settingsError);
+        if (settingsError) {
+          console.error("Error fetching settings:", settingsError);
+          // Return profile without theme if settings fetch fails
+          return data as Profile;
+        }
 
-      // Combine profile with settings data
-      return {
-        ...(data as Profile),
-        theme: settingsData?.theme || "light"
-      };
+        // Combine profile with settings data
+        return {
+          ...(data as Profile),
+          theme: settingsData?.theme || "light"
+        };
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        return null;
+      }
     },
     enabled: !!user,
   });
@@ -82,8 +92,10 @@ export const useProfile = () => {
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
+      if (!user) throw new Error("User not authenticated");
+      
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user?.id}/avatar.${fileExt}`;
+      const filePath = `${user.id}/avatar.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')

@@ -5,6 +5,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const UserProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +17,8 @@ const UserProfile: React.FC = () => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      if (!id) return;
+      
       setLoading(true);
       setError(null);
       
@@ -34,6 +38,7 @@ const UserProfile: React.FC = () => {
           .maybeSingle();
           
         if (error) {
+          console.error("Error fetching profile:", error);
           throw error;
         }
         
@@ -45,14 +50,13 @@ const UserProfile: React.FC = () => {
       } catch (err: any) {
         console.error("Error fetching profile:", err);
         setError(err.message || "Failed to load user profile");
+        toast.error("Failed to load user profile");
       } finally {
         setLoading(false);
       }
     };
     
-    if (id) {
-      fetchUserProfile();
-    }
+    fetchUserProfile();
   }, [id, currentUserProfile]);
 
   if (loading) {
@@ -75,18 +79,25 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center mt-12">
-      <Avatar className="h-20 w-20">
-        <AvatarImage src={profile.avatar_url} />
-        <AvatarFallback>{profile.full_name?.[0] || "?"}</AvatarFallback>
-      </Avatar>
-      <h2 className="text-2xl mt-4 font-semibold">{profile.full_name}</h2>
-      <div className="mt-2 text-gray-600">
-        {profile.status_message ?? "Available"}
-      </div>
-      <div className="mt-4">
-        <span className="text-sm text-gray-400">User Code:</span>
-        <span className="font-mono ml-2">{profile.user_code?.toString().padStart(6, "0")}</span>
-      </div>
+      <Card className="p-8 max-w-md w-full">
+        <div className="flex flex-col items-center">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={profile.avatar_url} />
+            <AvatarFallback>{profile.full_name?.[0] || "?"}</AvatarFallback>
+          </Avatar>
+          
+          <h2 className="text-2xl mt-4 font-semibold">{profile.full_name}</h2>
+          
+          <div className="mt-2 text-gray-600 dark:text-gray-400">
+            {profile.status_message ?? "Available"}
+          </div>
+          
+          <div className="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">User Code:</span>
+            <span className="font-mono ml-2">{profile.user_code?.toString().padStart(6, "0")}</span>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };

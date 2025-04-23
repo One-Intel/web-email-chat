@@ -24,45 +24,51 @@ export const useContacts = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Fetch both "forward" and "reverse" contacts
-      const { data: direct, error: directError } = await supabase
-        .from("contacts")
-        .select(`
-          *,
-          profiles:contact_id (
-            id, full_name, avatar_url, status_message, last_seen
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "accepted");
-      
-      if (directError) {
-        console.error("Error fetching direct contacts:", directError);
+      try {
+        // Fetch both "forward" and "reverse" contacts
+        const { data: direct, error: directError } = await supabase
+          .from("contacts")
+          .select(`
+            *,
+            profiles:contact_id (
+              id, full_name, avatar_url, status_message, last_seen
+            )
+          `)
+          .eq("user_id", user.id)
+          .eq("status", "accepted");
+        
+        if (directError) {
+          console.error("Error fetching direct contacts:", directError);
+          return [];
+        }
+
+        const { data: reverse, error: reverseError } = await supabase
+          .from("contacts")
+          .select(`
+            *,
+            profiles:user_id (
+              id, full_name, avatar_url, status_message, last_seen
+            )
+          `)
+          .eq("contact_id", user.id)
+          .eq("status", "accepted");
+        
+        if (reverseError) {
+          console.error("Error fetching reverse contacts:", reverseError);
+          return [];
+        }
+
+        const contacts = [...(direct || []), ...(reverse || [])];
+        return contacts.filter(c => 
+          c.profiles && 
+          typeof c.profiles === 'object' && // Ensure profiles is an object
+          'id' in c.profiles && // Check if 'id' exists in profiles
+          c.profiles.id !== user.id
+        );
+      } catch (err) {
+        console.error("Error fetching contacts:", err);
         return [];
       }
-
-      const { data: reverse, error: reverseError } = await supabase
-        .from("contacts")
-        .select(`
-          *,
-          profiles:user_id (
-            id, full_name, avatar_url, status_message, last_seen
-          )
-        `)
-        .eq("contact_id", user.id)
-        .eq("status", "accepted");
-      
-      if (reverseError) {
-        console.error("Error fetching reverse contacts:", reverseError);
-        return [];
-      }
-
-      const contacts = [...(direct || []), ...(reverse || [])];
-      return contacts.filter(c => 
-        c.profiles && 
-        typeof c.profiles !== 'string' && // Filter out any error objects
-        c.profiles.id !== user.id
-      );
     },
   });
 
@@ -73,25 +79,32 @@ export const useContacts = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
       
-      const { data, error } = await supabase
-        .from("contacts")
-        .select(`
-          *,
-          profiles:contact_id (
-            id, full_name, avatar_url, status_message, last_seen
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "pending");
-      
-      if (error) {
-        console.error("Error fetching sent requests:", error);
+      try {
+        const { data, error } = await supabase
+          .from("contacts")
+          .select(`
+            *,
+            profiles:contact_id (
+              id, full_name, avatar_url, status_message, last_seen
+            )
+          `)
+          .eq("user_id", user.id)
+          .eq("status", "pending");
+        
+        if (error) {
+          console.error("Error fetching sent requests:", error);
+          return [];
+        }
+        
+        return (data || []).filter(item => 
+          item.profiles && 
+          typeof item.profiles === 'object' && 
+          'id' in item.profiles
+        );
+      } catch (err) {
+        console.error("Error in sent requests:", err);
         return [];
       }
-      
-      return data?.filter(item => 
-        item.profiles && typeof item.profiles !== 'string'
-      ) || [];
     },
   });
 
@@ -102,25 +115,32 @@ export const useContacts = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
       
-      const { data, error } = await supabase
-        .from("contacts")
-        .select(`
-          *,
-          profiles:user_id (
-            id, full_name, avatar_url, status_message, last_seen
-          )
-        `)
-        .eq("contact_id", user.id)
-        .eq("status", "pending");
-      
-      if (error) {
-        console.error("Error fetching received requests:", error);
+      try {
+        const { data, error } = await supabase
+          .from("contacts")
+          .select(`
+            *,
+            profiles:user_id (
+              id, full_name, avatar_url, status_message, last_seen
+            )
+          `)
+          .eq("contact_id", user.id)
+          .eq("status", "pending");
+        
+        if (error) {
+          console.error("Error fetching received requests:", error);
+          return [];
+        }
+        
+        return (data || []).filter(item => 
+          item.profiles && 
+          typeof item.profiles === 'object' && 
+          'id' in item.profiles
+        );
+      } catch (err) {
+        console.error("Error in received requests:", err);
         return [];
       }
-      
-      return data?.filter(item => 
-        item.profiles && typeof item.profiles !== 'string'
-      ) || [];
     },
   });
 
