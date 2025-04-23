@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ContactItem } from "./ContactItems";
 import { FriendSearch } from "./FriendSearch";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export const ContactList = () => {
   const { 
@@ -28,6 +29,7 @@ export const ContactList = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Add user by 6-digit code
   const onFindFriends = async (data: { userCode: string }) => {
@@ -118,7 +120,8 @@ export const ContactList = () => {
       // Invalidate chats cache to refresh the list
       queryClient.invalidateQueries({ queryKey: ["chats"] });
       
-      // TODO: Navigate to the chat (will be handled by parent component)
+      // Navigate to the chat
+      navigate("/"); // This will redirect to the main page where the chat window will update
       return chatId;
     } catch (error: any) {
       toast.error("Failed to start chat: " + error.message);

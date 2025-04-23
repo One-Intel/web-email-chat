@@ -24,7 +24,7 @@ export const ContactItem: React.FC<ContactItemProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const handleChatStart = async () => {
+  const handleChatStart = () => {
     if (!onChatStart || !contact.profiles?.id) return;
     onChatStart(contact.profiles.id);
   };

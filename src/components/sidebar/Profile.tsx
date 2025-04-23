@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Profile = () => {
   const { profile, isLoading, updateProfile, uploadAvatar } = useProfile();
@@ -62,10 +63,12 @@ export const Profile = () => {
     <Card className="p-4 space-y-4">
       <div className="flex items-center space-x-4">
         <div className="relative">
-          <Avatar className="h-16 w-16 cursor-pointer" onClick={handleAvatarClick}>
-            <AvatarImage src={profile?.avatar_url} />
-            <AvatarFallback>{profile?.full_name?.[0]}</AvatarFallback>
-          </Avatar>
+          <Link to={`/profile/${user?.id}`}>
+            <Avatar className="h-16 w-16 cursor-pointer">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback>{profile?.full_name?.[0]}</AvatarFallback>
+            </Avatar>
+          </Link>
           <Button
             size="icon"
             variant="ghost"
@@ -115,7 +118,9 @@ export const Profile = () => {
             </div>
           ) : (
             <div>
-              <h2 className="font-semibold">{profile?.full_name}</h2>
+              <Link to={`/profile/${user?.id}`} className="hover:underline">
+                <h2 className="font-semibold">{profile?.full_name}</h2>
+              </Link>
               <p className="text-sm text-gray-500">{profile?.status_message || "No status"}</p>
               <div className="mt-2 flex items-center text-sm text-gray-500">
                 <User className="h-4 w-4 mr-1" />
@@ -136,14 +141,23 @@ export const Profile = () => {
                 <Mail className="h-4 w-4 mr-1" />
                 <span>{user?.email}</span>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit Profile
-              </Button>
+              <div className="flex mt-2 space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit Profile
+                </Button>
+                <Link to={`/profile/${user?.id}`}>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    View Profile
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>
