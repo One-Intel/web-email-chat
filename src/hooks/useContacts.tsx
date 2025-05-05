@@ -67,8 +67,8 @@ export const useContacts = () => {
               !('id' in c.profiles)) {
             return false;
           }
-          // Safe to access id now - TypeScript now knows c.profiles is not null
-          // and has an id property
+          
+          // Now TypeScript knows c.profiles is not null and has an id property
           const profileId = c.profiles.id;
           return profileId !== null && profileId !== undefined && profileId !== user.id;
         });
@@ -111,6 +111,8 @@ export const useContacts = () => {
               !('id' in item.profiles)) {
             return false;
           }
+          
+          // Now TypeScript knows item.profiles is not null and has an id property
           const profileId = item.profiles.id;
           return profileId !== null && profileId !== undefined;
         });
@@ -153,6 +155,8 @@ export const useContacts = () => {
               !('id' in item.profiles)) {
             return false;
           }
+          
+          // Now TypeScript knows item.profiles is not null and has an id property
           const profileId = item.profiles.id;
           return profileId !== null && profileId !== undefined;
         });
