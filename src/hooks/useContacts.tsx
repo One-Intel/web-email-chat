@@ -59,13 +59,17 @@ export const useContacts = () => {
         }
 
         const contacts = [...(direct || []), ...(reverse || [])];
-        return contacts.filter(c => 
-          c.profiles && 
-          typeof c.profiles === 'object' && 
-          c.profiles !== null &&
-          'id' in c.profiles && 
-          c.profiles.id !== user.id
-        );
+        return contacts.filter(c => {
+          // More comprehensive check to ensure profile exists and has valid ID
+          if (!c.profiles || 
+              typeof c.profiles !== 'object' || 
+              c.profiles === null || 
+              !('id' in c.profiles)) {
+            return false;
+          }
+          // Safe to access id now
+          return c.profiles.id !== user.id;
+        });
       } catch (err) {
         console.error("Error fetching contacts:", err);
         return [];
@@ -97,12 +101,13 @@ export const useContacts = () => {
           return [];
         }
         
-        return (data || []).filter(item => 
-          item.profiles && 
-          typeof item.profiles === 'object' && 
-          item.profiles !== null &&
-          'id' in item.profiles
-        );
+        return (data || []).filter(item => {
+          // More comprehensive check to ensure profile exists and has valid ID
+          return item.profiles && 
+                 typeof item.profiles === 'object' && 
+                 item.profiles !== null &&
+                 'id' in item.profiles;
+        });
       } catch (err) {
         console.error("Error in sent requests:", err);
         return [];
@@ -134,12 +139,13 @@ export const useContacts = () => {
           return [];
         }
         
-        return (data || []).filter(item => 
-          item.profiles && 
-          typeof item.profiles === 'object' && 
-          item.profiles !== null &&
-          'id' in item.profiles
-        );
+        return (data || []).filter(item => {
+          // More comprehensive check to ensure profile exists and has valid ID
+          return item.profiles && 
+                 typeof item.profiles === 'object' && 
+                 item.profiles !== null &&
+                 'id' in item.profiles;
+        });
       } catch (err) {
         console.error("Error in received requests:", err);
         return [];
