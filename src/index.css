@@ -151,7 +151,7 @@
 }
 
 .tab-button.active {
-  @apply text-webchat-primary bg-webchat-secondary rounded-lg;
+  @apply text-webchat-primary bg-[#FBE9E7] rounded-lg;
 }
 
 /* Message input styles */

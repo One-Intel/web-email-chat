@@ -32,8 +32,10 @@ export default {
 					bg: 'var(--webchat-bg)',
 					bubble: 'var(--webchat-bubble)',
 					'bubble-me': 'var(--webchat-bubble-me)',
-					hover: '#F5F5F5',
-					read: '#4FC3F7'
+					secondary: 'var(--webchat-secondary)',
+					hover: 'var(--webchat-hover)',
+					read: 'var(--webchat-read)',
+					time: 'var(--webchat-time)'
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
