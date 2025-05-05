@@ -11,7 +11,7 @@ type ContactWithProfile = Database['public']['Tables']['contacts']['Row'] & {
     avatar_url: string | null;
     status_message: string | null;
     last_seen: string | null;
-  }
+  } | null;
 };
 
 export const useContacts = () => {
@@ -61,8 +61,8 @@ export const useContacts = () => {
         const contacts = [...(direct || []), ...(reverse || [])];
         return contacts.filter(c => 
           c.profiles && 
-          typeof c.profiles === 'object' && // Ensure profiles is an object
-          'id' in c.profiles && // Check if 'id' exists in profiles
+          typeof c.profiles === 'object' && 
+          'id' in c.profiles && 
           c.profiles.id !== user.id
         );
       } catch (err) {

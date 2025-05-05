@@ -16,15 +16,21 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
   const { user } = useAuth();
 
   if (isLoading) return <div className="p-3">Loading chats...</div>;
-  if (error) return <div className="p-3 text-red-500">Error loading chats</div>;
+  if (error) return <div className="p-3 text-red-500">Error loading chats: {String(error)}</div>;
+
+  console.log("Rendering chats:", chats);
 
   // Make sure chats is an array before mapping
   const processedChats = Array.isArray(chats) ? chats.map(chat => {
+    // Find participants that aren't the current user
     const otherParticipants = chat.participants.filter(
       p => p.user_id !== user?.id
     );
     
-    const otherUser = otherParticipants.length > 0 ? otherParticipants[0].profiles : null;
+    // Get the first other participant's profile, or use a default if none found
+    const otherUser = otherParticipants.length > 0 
+      ? otherParticipants[0].profiles 
+      : null;
     
     return {
       id: chat.id,
@@ -37,6 +43,8 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
       avatar: otherUser?.avatar_url || "",
     };
   }) : [];
+
+  console.log("Processed chats:", processedChats);
 
   return (
     <div className="space-y-4">

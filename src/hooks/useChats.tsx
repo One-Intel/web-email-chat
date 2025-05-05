@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -15,14 +14,14 @@ export type ChatWithParticipants = {
       avatar_url: string | null;
       status_message: string | null;
       last_seen: string | null;
-    }
+    } | null;
   }[];
   last_message?: {
     content: string;
     created_at: string;
     sender_id: string;
     is_deleted: boolean;
-  }
+  };
 };
 
 export const useChats = () => {
@@ -36,6 +35,8 @@ export const useChats = () => {
       if (!user) return [];
 
       try {
+        console.log("Fetching chats for user:", user.id);
+        
         // First, get all the user's chats directly
         const { data: chatParticipants, error: chatError } = await supabase
           .from("chat_participants")
@@ -48,10 +49,12 @@ export const useChats = () => {
         }
         
         if (!chatParticipants || chatParticipants.length === 0) {
+          console.log("No chat participants found");
           return [];
         }
 
         const chatIds = chatParticipants.map(cp => cp.chat_id);
+        console.log("Found chat IDs:", chatIds);
 
         // Get the chat details
         const { data: chatsData, error: chatsError } = await supabase
@@ -65,13 +68,18 @@ export const useChats = () => {
         }
         
         if (!chatsData || chatsData.length === 0) {
+          console.log("No chats found");
           return [];
         }
+
+        console.log("Found chats:", chatsData);
 
         // For each chat, get the participants and the latest message
         const chatsWithDetails = await Promise.all(
           chatsData.map(async (chat) => {
             try {
+              console.log("Getting details for chat:", chat.id);
+              
               // Get participants for this chat
               const { data: participants, error: participantsError } = await supabase
                 .from("chat_participants")
@@ -79,7 +87,7 @@ export const useChats = () => {
                 .eq("chat_id", chat.id);
 
               if (participantsError) {
-                console.error("Error fetching participants:", participantsError);
+                console.error("Error fetching participants for chat", chat.id, ":", participantsError);
                 throw participantsError;
               }
 
@@ -94,40 +102,22 @@ export const useChats = () => {
                       .maybeSingle();
 
                     if (profileError) {
-                      console.error("Error fetching profile:", profileError);
+                      console.error("Error fetching profile for user", participant.user_id, ":", profileError);
                       return {
                         user_id: participant.user_id,
-                        profiles: {
-                          id: participant.user_id,
-                          full_name: "Unknown User",
-                          avatar_url: null,
-                          status_message: null,
-                          last_seen: null
-                        }
+                        profiles: null
                       };
                     }
 
                     return {
                       user_id: participant.user_id,
-                      profiles: profile || {
-                        id: participant.user_id,
-                        full_name: "Unknown User",
-                        avatar_url: null,
-                        status_message: null,
-                        last_seen: null
-                      }
+                      profiles: profile || null
                     };
                   } catch (err) {
                     console.error("Error processing participant:", err);
                     return {
                       user_id: participant.user_id,
-                      profiles: {
-                        id: participant.user_id,
-                        full_name: "Unknown User",
-                        avatar_url: null,
-                        status_message: null,
-                        last_seen: null
-                      }
+                      profiles: null
                     };
                   }
                 })
@@ -143,7 +133,7 @@ export const useChats = () => {
                 .maybeSingle();
 
               if (messageError) {
-                console.error("Error fetching last message:", messageError);
+                console.error("Error fetching last message for chat", chat.id, ":", messageError);
               }
 
               return {

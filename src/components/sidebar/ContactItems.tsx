@@ -32,6 +32,16 @@ export const ContactItem: React.FC<ContactItemProps> = ({
     onViewProfile(contact.profiles.id);
   };
   
+  // Make sure profiles exists and has necessary properties
+  const hasValidProfile = contact.profiles && 
+                          typeof contact.profiles === 'object' && 
+                          'id' in contact.profiles;
+  
+  if (!hasValidProfile) {
+    console.error("Invalid profile in contact:", contact);
+    return null; // Don't render items with invalid profiles
+  }
+  
   return (
     <div
       key={contact.id}
