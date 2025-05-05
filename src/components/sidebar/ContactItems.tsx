@@ -35,6 +35,7 @@ export const ContactItem: React.FC<ContactItemProps> = ({
   // Make sure profiles exists and has necessary properties
   const hasValidProfile = contact.profiles && 
                           typeof contact.profiles === 'object' && 
+                          contact.profiles !== null &&
                           'id' in contact.profiles;
   
   if (!hasValidProfile) {

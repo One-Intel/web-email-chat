@@ -62,6 +62,7 @@ export const useContacts = () => {
         return contacts.filter(c => 
           c.profiles && 
           typeof c.profiles === 'object' && 
+          c.profiles !== null &&
           'id' in c.profiles && 
           c.profiles.id !== user.id
         );
@@ -99,6 +100,7 @@ export const useContacts = () => {
         return (data || []).filter(item => 
           item.profiles && 
           typeof item.profiles === 'object' && 
+          item.profiles !== null &&
           'id' in item.profiles
         );
       } catch (err) {
@@ -135,6 +137,7 @@ export const useContacts = () => {
         return (data || []).filter(item => 
           item.profiles && 
           typeof item.profiles === 'object' && 
+          item.profiles !== null &&
           'id' in item.profiles
         );
       } catch (err) {

@@ -22,13 +22,16 @@ export const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
 
   // Make sure chats is an array before mapping
   const processedChats = Array.isArray(chats) ? chats.map(chat => {
+    // Ensure participants exists and is an array
+    const chatParticipants = Array.isArray(chat.participants) ? chat.participants : [];
+    
     // Find participants that aren't the current user
-    const otherParticipants = chat.participants.filter(
+    const otherParticipants = chatParticipants.filter(
       p => p.user_id !== user?.id
     );
     
     // Get the first other participant's profile, or use a default if none found
-    const otherUser = otherParticipants.length > 0 
+    const otherUser = otherParticipants.length > 0 && otherParticipants[0].profiles 
       ? otherParticipants[0].profiles 
       : null;
     
