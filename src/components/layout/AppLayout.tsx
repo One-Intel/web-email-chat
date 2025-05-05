@@ -9,7 +9,7 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
   return (
-    <div className={cn("flex h-screen w-full bg-webchat-bg", className)}>
+    <div className={cn("min-h-screen w-full bg-gray-100", className)}>
       {children}
     </div>
   );

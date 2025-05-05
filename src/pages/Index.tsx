@@ -1,67 +1,67 @@
+
 import React from "react";
 import { Navigate } from "react-router-dom";
 import WispaChat from "@/components/layout/WispaChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft } from "lucide-react";
-import { Profile } from "@/components/sidebar/Profile";
-import { Settings } from "@/components/sidebar/Settings";
-import { ContactList } from "@/components/sidebar/ContactList";
-import { ChatList } from "@/components/chat/ChatList";
+import ChatList from "@/components/chat/ChatList";
 import ChatWindow from "@/components/chat/ChatWindow";
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>();
   const isMobile = useIsMobile();
-  const [showSidebar, setShowSidebar] = useState(!isMobile);
+  const [showChat, setShowChat] = useState(false);
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="text-webchat-primary animate-pulse text-xl">Loading...</div>
+    </div>
+  );
+  
   if (!user) return <Navigate to="/auth" replace />;
 
   const handleChatSelect = (chatId: string) => {
     setSelectedChatId(chatId);
     if (isMobile) {
-      setShowSidebar(false);
+      setShowChat(true);
+    }
+  };
+
+  const handleBackClick = () => {
+    if (isMobile) {
+      setShowChat(false);
     }
   };
 
   return (
     <WispaChat>
-      <div className="flex w-full h-full">
-        {(showSidebar || !isMobile) && (
-          <div className={`${isMobile ? "w-full" : "w-1/3"} max-w-sm border-r bg-background flex flex-col`}>
-            <div className="p-3 bg-webchat-primary dark:bg-webchat-dark">
-              <Profile />
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-4">
-              <ChatList onChatSelect={handleChatSelect} />
-              <ContactList />
-            </div>
-            <div className="p-3 border-t">
-              <Settings />
-            </div>
+      {isMobile ? (
+        <>
+          {showChat && selectedChatId ? (
+            <ChatWindow 
+              chatId={selectedChatId} 
+              className="h-full" 
+              onBackClick={handleBackClick}
+            />
+          ) : (
+            <ChatList onChatSelect={handleChatSelect} />
+          )}
+        </>
+      ) : (
+        <div className="flex h-full">
+          <div className="w-1/3 border-r">
+            <ChatList onChatSelect={handleChatSelect} />
           </div>
-        )}
-        {(!showSidebar || !isMobile) && (
-          <div className={`${isMobile ? "w-full" : "flex-1"}`}>
-            <ChatWindow
-              chatId={selectedChatId}
+          <div className="flex-1">
+            <ChatWindow 
+              chatId={selectedChatId} 
               className="h-full"
             />
           </div>
-        )}
-
-        {isMobile && selectedChatId && !showSidebar && (
-          <button
-            className="fixed top-3 left-3 z-10 p-2 rounded-full bg-webchat-primary text-white shadow-md"
-            onClick={() => setShowSidebar(true)}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </WispaChat>
   );
 };

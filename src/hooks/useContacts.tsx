@@ -67,8 +67,9 @@ export const useContacts = () => {
               !('id' in c.profiles)) {
             return false;
           }
-          // Safe to access id now
-          return c.profiles.id !== user.id;
+          // Safe to access id now - TypeScript now knows c.profiles is not null
+          // and has an id property
+          return c.profiles?.id !== user.id;
         });
       } catch (err) {
         console.error("Error fetching contacts:", err);
@@ -103,10 +104,13 @@ export const useContacts = () => {
         
         return (data || []).filter(item => {
           // More comprehensive check to ensure profile exists and has valid ID
-          return item.profiles && 
-                 typeof item.profiles === 'object' && 
-                 item.profiles !== null &&
-                 'id' in item.profiles;
+          if (!item.profiles || 
+              typeof item.profiles !== 'object' || 
+              item.profiles === null || 
+              !('id' in item.profiles)) {
+            return false;
+          }
+          return true;
         });
       } catch (err) {
         console.error("Error in sent requests:", err);
@@ -141,10 +145,13 @@ export const useContacts = () => {
         
         return (data || []).filter(item => {
           // More comprehensive check to ensure profile exists and has valid ID
-          return item.profiles && 
-                 typeof item.profiles === 'object' && 
-                 item.profiles !== null &&
-                 'id' in item.profiles;
+          if (!item.profiles || 
+              typeof item.profiles !== 'object' || 
+              item.profiles === null || 
+              !('id' in item.profiles)) {
+            return false;
+          }
+          return true;
         });
       } catch (err) {
         console.error("Error in received requests:", err);

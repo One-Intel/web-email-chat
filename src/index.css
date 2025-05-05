@@ -14,34 +14,39 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 142 70% 49%; /* WhatsApp green */
+    /* Updated to orange theme from image */
+    --primary: 16 100% 50%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 16 30% 95%;
+    --secondary-foreground: 16 100% 45%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 16 20% 96%;
+    --accent-foreground: 16 100% 45%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 70% 49%;
+    --ring: 16 100% 50%;
 
-    --radius: 0.75rem; /* Rounder corners like WhatsApp mobile */
+    --radius: 1rem;
     
-    /* WhatsApp specific colors */
-    --webchat-primary: #25D366;
-    --webchat-dark: #075E54;
-    --webchat-light: #DCF8C6;
-    --webchat-bg: #E5DDD5;
+    /* App specific colors */
+    --webchat-primary: #FF5722;
+    --webchat-dark: #E64A19;
+    --webchat-light: #FFCCBC;
+    --webchat-bg: #FAFAFA;
     --webchat-bubble: #FFFFFF;
-    --webchat-bubble-me: #DCF8C6;
+    --webchat-bubble-me: #FFF3E0;
+    --webchat-secondary: #FBE9E7;
+    --webchat-hover: #FFF3E0;
+    --webchat-read: #FF5722;
+    --webchat-time: #757575;
   }
 
   .dark {
@@ -54,11 +59,11 @@
     --popover: 240 10% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 142 70% 42%; /* Darker WhatsApp green for dark mode */
+    --primary: 16 90% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 8% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 16 80% 50%;
 
     --muted: 240 8% 18%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -71,15 +76,19 @@
 
     --border: 240 8% 18%;
     --input: 240 8% 18%;
-    --ring: 142 70% 42%;
+    --ring: 16 90% 50%;
 
-    /* WhatsApp dark mode specific colors */
-    --webchat-primary: #00A884;  /* Slightly darker green for dark mode */
-    --webchat-dark: #0B141A;
-    --webchat-light: #054740;
-    --webchat-bg: #0B141A;
-    --webchat-bubble: #1F2C34;
-    --webchat-bubble-me: #005C4B;
+    /* App specific dark mode colors */
+    --webchat-primary: #FF5722;
+    --webchat-dark: #BF360C;
+    --webchat-light: #3E2723;
+    --webchat-bg: #121212;
+    --webchat-bubble: #1F1F1F;
+    --webchat-bubble-me: #3E2723;
+    --webchat-secondary: #3E2723;
+    --webchat-hover: #261713;
+    --webchat-read: #FF7043;
+    --webchat-time: #9E9E9E;
   }
 }
 
@@ -93,27 +102,75 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   
-  /* WhatsApp mobile-like styling */
+  /* Mobile-like styling */
   .chat-bubble {
     @apply rounded-2xl p-2 px-3 max-w-[80%] break-words;
   }
   
   .chat-bubble-incoming {
     @apply bg-webchat-bubble dark:bg-webchat-bubble;
-    border-radius: 0.75rem 0.75rem 0.75rem 0;
+    border-radius: 1.5rem 1.5rem 1.5rem 0;
   }
   
   .chat-bubble-outgoing {
-    @apply bg-webchat-bubble-me dark:bg-webchat-bubble-me;
-    border-radius: 0.75rem 0.75rem 0 0.75rem;
+    @apply bg-webchat-primary text-white dark:bg-webchat-primary;
+    border-radius: 1.5rem 1.5rem 0 1.5rem;
   }
-  
-  .chat-background {
-    background-color: var(--webchat-bg);
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23000000' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+
+  .app-status-bar {
+    @apply h-10 flex items-center justify-between px-4 py-2;
   }
-  
-  .dark .chat-background {
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+
+  .reaction-button {
+    @apply h-10 w-10 rounded-full flex items-center justify-center text-white transition-transform hover:scale-110;
   }
+}
+
+/* App-specific utility classes */
+.app-container {
+  @apply flex flex-col h-screen max-w-md mx-auto bg-background overflow-hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.onboarding-container {
+  @apply flex flex-col h-screen max-w-md mx-auto bg-white overflow-hidden p-6 text-center;
+}
+
+.chat-list-item {
+  @apply flex items-center py-3 px-4 hover:bg-webchat-hover cursor-pointer border-b border-gray-100;
+}
+
+.message-time {
+  @apply text-xs text-webchat-time mt-1;
+}
+
+.tab-button {
+  @apply py-2 px-4 text-gray-600 font-medium transition-colors;
+}
+
+.tab-button.active {
+  @apply text-webchat-primary bg-webchat-secondary rounded-lg;
+}
+
+/* Message input styles */
+.message-input-container {
+  @apply flex items-center p-2 bg-background border-t;
+}
+
+.message-input {
+  @apply flex-1 bg-gray-100 rounded-full py-2 px-4 focus:outline-none;
+}
+
+.send-button {
+  @apply ml-2 p-2 rounded-full bg-webchat-primary text-white;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  @apply text-xs text-webchat-primary italic;
+}
+
+/* Reaction buttons */
+.reaction-container {
+  @apply flex space-x-2 mt-2 justify-center;
 }

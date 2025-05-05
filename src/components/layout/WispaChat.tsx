@@ -8,8 +8,10 @@ interface WispaChatProps {
 
 const WispaChat: React.FC<WispaChatProps> = ({ children }) => {
   return (
-    <AppLayout className="bg-webchat-bg dark:bg-gray-900">
-      {children}
+    <AppLayout className="bg-background dark:bg-gray-900">
+      <div className="app-container">
+        {children}
+      </div>
     </AppLayout>
   );
 };
