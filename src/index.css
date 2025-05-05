@@ -140,8 +140,10 @@
   @apply flex items-center py-3 px-4 hover:bg-webchat-hover cursor-pointer border-b border-gray-100;
 }
 
-.message-time {
-  @apply text-xs text-webchat-time mt-1;
+@layer utilities {
+  .message-time {
+    @apply text-xs text-gray-500 mt-1;
+  }
 }
 
 .tab-button {
